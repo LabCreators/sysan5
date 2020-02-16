@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 from copy import deepcopy
+from consts import fuzzy_sets_consts
 
 
 alpha_root = np.array([[0.2, None, 0.3, 0.45, 0.7, 0.3, 0.5],
@@ -96,12 +97,28 @@ def init_decision_time(example):
                 temp[i, j] = [0, 'infinity']
     return temp
 
+
 def check_infinity(value):
     try:
         int(value)
         return True
     except:
         return False
+
+
+def find_intervals_per_situation(decision_time_matrix):
+    return [(min([el[0] for el in x if el]), max([el[1] for el in x if el])) for x in decision_time_matrix]
+
+
+def predict(intervals, eta):
+    df_result = pd.DataFrame(pd.Series(intervals, index=['S{}'.format(str(i)) for i in range(1, len(intervals)+1)]),
+                             columns=['intervals'])
+
+    min_bound, max_bound = fuzzy_sets_consts.get(eta)
+    df_result['class'] = df_result.intervals.apply(lambda x: 'A3' if x[1] > max_bound else 'A1' if x[0] < min_bound
+                                                   else 'A2')
+
+    return df_result
 
 
 if __name__ == "__main__":
@@ -139,7 +156,10 @@ if __name__ == "__main__":
                     Id_root[j, k] = Id
                     It_root[j, k] = It
 
+    intervals_tuples_list = find_intervals_per_situation(decision_time)
+    classification_result = predict(intervals_tuples_list, eta)
     #graph_plot(df_history, 'Ip', 0, 0)
     #graph_plot(df_history, 'Id', 0, 0)
     #graph_plot(df_history, 'It', 0, 0)
-    #print(decision_time)
+    print(decision_time)
+    print(classification_result)
